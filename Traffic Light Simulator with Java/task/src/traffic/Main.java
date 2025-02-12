@@ -3,7 +3,7 @@ package traffic;
 import java.util.Scanner;
 
 /*
-Stage 1/6 Completed
+Stage 2/6 Completed
 Traffic Light Simulator with Java - https://hyperskill.org/projects/288/stages/1500/implement
 Part of Hyperskill's Java Backend Developer (Spring Boot) course.
  */
