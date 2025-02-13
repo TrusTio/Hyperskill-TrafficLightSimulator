@@ -13,8 +13,5 @@ programming_language: Java
 programming_language_version: 11
 content:
   - Traffic Light Simulator with Java
-additional_files:
-  - name: build.gradle
-  - name: settings.gradle
 mode: Study
 yaml_version: 2

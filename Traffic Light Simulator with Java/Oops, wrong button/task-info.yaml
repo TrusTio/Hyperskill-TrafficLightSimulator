@@ -9,6 +9,9 @@ files:
   - name: test/SystemOutput.java
     visible: false
     learner_created: false
-feedback_link: https://hyperskill.org/projects/288/stages/1502/implement#comment
-status: Unchecked
+feedback_link: https://hyperskill.org/learn/step/22724#comment
+status: Solved
+feedback:
+  message: Congratulations!
+  time: "Thu, 13 Feb 2025 10:18:24 UTC"
 record: -1

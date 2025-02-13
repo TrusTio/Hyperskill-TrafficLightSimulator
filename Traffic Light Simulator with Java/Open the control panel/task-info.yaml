@@ -6,7 +6,7 @@ files:
   - name: test/TrafficLightTest.java
     visible: false
     learner_created: false
-feedback_link: https://hyperskill.org/projects/288/stages/1500/implement#comment
+feedback_link: https://hyperskill.org/learn/step/22722#comment
 status: Solved
 feedback:
   message: Congratulations!
