@@ -10,22 +10,8 @@ files:
     visible: false
     learner_created: false
 feedback_link: https://hyperskill.org/learn/step/22725#comment
-status: Failed
+status: Solved
 feedback:
-  message: "Wrong answer in test #7\n\nTime difference between two outputs (current\
-    \ and a second earlier) is not equal to 1:\nSecond earlier: 3\nCurrent: 3\n\n\
-    Please find below the output of your program during this failed test.\nNote that\
-    \ the &#39;&gt;&#39; character indicates the beginning of the input line.\n\n\
-    ---\n\nWelcome to the traffic management system!\nInput the number of roads:&gt;\
-    \ 1\nInput the interval:&gt; 1\nMenu:\n1. Add\n2. Delete\n3. System\n0. Quit\n\
-    &gt; 3\nSystem opened\n! 0s. have passed since system startup !\n! Number of roads:\
-    \ 1 !\n! Interval: 1 !\n! Press &quot;Enter&quot; to open menu !\n! 1s. have passed\
-    \ since system startup !\n! Number of roads: 1 !\n! Interval: 1 !\n! Press &quot;Enter&quot;\
-    \ to open menu !\n! 2s. have passed since system startup !\n! Number of roads:\
-    \ 1 !\n! Interval: 1 !\n! Press &quot;Enter&quot; to open menu !\n! 3s. have passed\
-    \ since system startup !\n! Number of roads: 1 !\n! Interval: 1 !\n! Press &quot;Enter&quot;\
-    \ to open menu !\n&gt; \nMenu:\n1. Add\n2. Delete\n3. System\n0. Quit\n&gt; 3\n\
-    System opened\n! 3s. have passed since system startup !\n! Number of roads: 1\
-    \ !\n! Interval: 1 !\n! Press &quot;Enter&quot; to open menu !"
-  time: "Mon, 17 Feb 2025 18:14:06 UTC"
-record: -1
+  message: Congratulations!
+  time: "Tue, 18 Feb 2025 11:33:46 UTC"
+record: 4

@@ -4,7 +4,7 @@ import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 /*
-TODO: Fails on Test #7 of Stage 4/6 currently
+Completed Stage 4/6
 Traffic Light Simulator with Java - https://hyperskill.org/projects/288/stages/1500/implement
 Part of Hyperskill's Java Backend Developer (Spring Boot) course.
  */
@@ -29,10 +29,10 @@ public class Main {
 
     /**
      * Navigates the menu and performs actions based on that.
-     *
      * @param scanner       {@link Scanner} to be used for input
      * @param numberOfRoads
      * @param interval
+     * @param timeElapsedThread {@link TimeElapsed} thread to be used to print the elapsed time since program start
      */
     private static void navigateMenu(Scanner scanner, int numberOfRoads, int interval, TimeElapsed timeElapsedThread) {
         boolean quitSelected = false;
@@ -56,13 +56,11 @@ public class Main {
                     scanner.nextLine();
                 }
                 case 3 -> {
-                    System.out.println("System opened");
-                    PrintSystem printSystem = new PrintSystem(timeElapsedThread, interval, numberOfRoads);
-                    printSystem.start();
-
+                    timeElapsedThread.setNumberOfRoads(numberOfRoads);
+                    timeElapsedThread.setInterval(interval);
+                    timeElapsedThread.setPrintInfo(true);
                     scanner.nextLine();
-
-                    printSystem.stopThread();
+                    timeElapsedThread.setPrintInfo(false);
                 }
                 case 0 -> {
                     timeElapsedThread.stopThread();
@@ -84,7 +82,7 @@ public class Main {
      * @return int input
      */
     private static int getValidInput(Scanner scanner) {
-        int input = 0;
+        int input;
         while (true) {
             try {
                 input = Integer.parseInt(scanner.nextLine());
@@ -111,12 +109,24 @@ public class Main {
     }
 }
 
+/**
+ * Counts the seconds elapsed since program start. Has a boolean printMenu that can be set to true to print
+ */
 class TimeElapsed extends Thread {
     private volatile boolean running = true;
-    private int secondsElapsed = 0;
+    private boolean printInfo = false;
+    private int numberOfRoads, interval;
 
-    public int getSecondsElapsed() {
-        return secondsElapsed;
+    public void setPrintInfo(boolean printInfo) {
+        this.printInfo = printInfo;
+    }
+
+    public void setNumberOfRoads(int numberOfRoads) {
+        this.numberOfRoads = numberOfRoads;
+    }
+
+    public void setInterval(int interval) {
+        this.interval = interval;
     }
 
     @Override
@@ -125,10 +135,17 @@ class TimeElapsed extends Thread {
 
         while (running) {
             long elapsedTime = (System.nanoTime() - startTime) / 1_000_000_000; // Convert nanoseconds to seconds
-            secondsElapsed = (int) elapsedTime;
+            int secondsElapsed = (int) elapsedTime;
+            if (printInfo) {
+                System.out.printf("""
+                        ! %ds. have passed since system startup !
+                        ! Number of roads: %d !
+                        ! Interval: %d !
+                        ! Press "Enter" to open menu !
+                        """, secondsElapsed, numberOfRoads, interval);
+            }
             try {
-                TimeUnit.MILLISECONDS.sleep(500);
-                secondsElapsed++;
+                TimeUnit.MILLISECONDS.sleep(1000);
             } catch (InterruptedException e) {
                 break;
             }
@@ -137,45 +154,6 @@ class TimeElapsed extends Thread {
 
     public void stopThread() {
         running = false;
-        this.interrupt(); // interrupt if sleeping
-    }
-}
-
-class PrintSystem extends Thread {
-    private volatile boolean running = true; // Volatile flag to stop thread safely
-    private TimeElapsed timeElapsedThread;
-    private int interval, numberOfRoads;
-    private int lastPrintedSeconds = -1; // Track last printed time
-
-    public PrintSystem(TimeElapsed timeElapsedThread, int interval, int numberOfRoads) {
-        this.timeElapsedThread = timeElapsedThread;
-        this.interval = interval;
-        this.numberOfRoads = numberOfRoads;
-    }
-
-    @Override
-    public void run() {
-        while (running) {
-            int currentSeconds = timeElapsedThread.getSecondsElapsed();
-            if (currentSeconds != lastPrintedSeconds) { // Only print if time has changed
-                lastPrintedSeconds = currentSeconds;
-                System.out.printf("""
-                        ! %ds. have passed since system startup !
-                        ! Number of roads: %d !
-                        ! Interval: %d !
-                        ! Press "Enter" to open menu !
-                        """, timeElapsedThread.getSecondsElapsed(), numberOfRoads, interval);
-            }
-            try {
-                TimeUnit.MILLISECONDS.sleep(100);
-            } catch (InterruptedException e) {
-                break;
-            }
-        }
-    }
-
-    public void stopThread() {
-        running = false; // Set flag to false to stop thread
         this.interrupt(); // interrupt if sleeping
     }
 }

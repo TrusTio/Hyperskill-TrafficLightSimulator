@@ -1,17 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id=":Traffic_Light_Simulator_with_Java-task-build-test-results:test" external.linked.project.path="$MODULE_DIR$/../../../../../../Traffic Light Simulator with Java/task/build/test-results" external.root.project.path="$MODULE_DIR$/../../../../../.." external.system.id="GRADLE" external.system.module.group="Traffic Light Simulator with Java" external.system.module.type="sourceSet" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
+<module external.linked.project.id=":util:test" external.linked.project.path="$MODULE_DIR$/../../../util" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="Hyperskill-TrafficLightSimulator" external.system.module.type="sourceSet" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager">
-    <output-test url="file://$MODULE_DIR$/../../../../../../Traffic Light Simulator with Java/task/build/test-results/out/test/classes" />
+    <output-test url="file://$MODULE_DIR$/../../../util/out/test/classes" />
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../../../../../../Traffic Light Simulator with Java/task/build/test-results/src/test" />
-    <content url="file://$MODULE_DIR$/../../../../../../Traffic Light Simulator with Java/task/build/test-results/test">
-      <sourceFolder url="file://$MODULE_DIR$/../../../../../../Traffic Light Simulator with Java/task/build/test-results/test" isTestSource="true" />
-    </content>
+    <content url="file://$MODULE_DIR$/../../../util/src/test" />
+    <content url="file://$MODULE_DIR$/../../../util/test" />
     <orderEntry type="jdk" jdkName="jbr-21" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Traffic_Light_Simulator_with_Java.Traffic_Light_Simulator_with_Java-task-build-test-results.main" />
-    <orderEntry type="module" module-name="Traffic_Light_Simulator_with_Java.util.main" />
-    <orderEntry type="module" module-name="Traffic_Light_Simulator_with_Java.util.test" production-on-test="" />
+    <orderEntry type="module" module-name="Hyperskill-TrafficLightSimulator.util.main" />
     <orderEntry type="library" name="Gradle: com.github.hyperskill:hs-test:release-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Gradle: org.assertj:assertj-swing-junit:3.17.1" level="project" />
     <orderEntry type="library" name="Gradle: junit:junit:4.13.2" level="project" />
@@ -26,5 +22,5 @@
     <orderEntry type="library" name="Gradle: org.assertj:assertj-core:3.17.2" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Gradle: org.easytesting:fest-util:1.2.5" level="project" />
   </component>
-  <component name="TestModuleProperties" production-module="Traffic_Light_Simulator_with_Java.Traffic_Light_Simulator_with_Java-task-build-test-results.main" />
+  <component name="TestModuleProperties" production-module="Hyperskill-TrafficLightSimulator.util.main" />
 </module>
