@@ -1,78 +1,30 @@
 package traffic;
 
+import java.util.ArrayDeque;
+import java.util.Queue;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 /*
-Completed Stage 4/6
+Completed Stage 5/6
 Traffic Light Simulator with Java - https://hyperskill.org/projects/288/stages/1500/implement
 Part of Hyperskill's Java Backend Developer (Spring Boot) course.
  */
 public class Main {
+    private static final String WELCOME_TEXT = "Welcome to the traffic management system!";
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Welcome to the traffic management system!");
 
+        System.out.println(WELCOME_TEXT);
         System.out.print("Input the number of roads:");
         int numberOfRoads = getValidInput(scanner);
 
         System.out.print("Input the interval:");
         int interval = getValidInput(scanner);
 
-        TimeElapsed timeElapsedThread = new TimeElapsed();
-        timeElapsedThread.setName("QueueThread");
-        timeElapsedThread.start();
-
-        navigateMenu(scanner, numberOfRoads, interval, timeElapsedThread);
-
-    }
-
-    /**
-     * Navigates the menu and performs actions based on that.
-     * @param scanner       {@link Scanner} to be used for input
-     * @param numberOfRoads
-     * @param interval
-     * @param timeElapsedThread {@link TimeElapsed} thread to be used to print the elapsed time since program start
-     */
-    private static void navigateMenu(Scanner scanner, int numberOfRoads, int interval, TimeElapsed timeElapsedThread) {
-        boolean quitSelected = false;
-        while (!quitSelected) {
-            printMenu();
-
-            int input = -1;
-            try {
-                input = Integer.parseInt(scanner.nextLine());
-            } catch (NumberFormatException ignored) {
-            }
-            switch (input) {
-                case 1 -> {
-                    numberOfRoads++;
-                    System.out.println("Road added");
-                    scanner.nextLine();
-                }
-                case 2 -> {
-                    numberOfRoads--;
-                    System.out.println("Road deleted");
-                    scanner.nextLine();
-                }
-                case 3 -> {
-                    timeElapsedThread.setNumberOfRoads(numberOfRoads);
-                    timeElapsedThread.setInterval(interval);
-                    timeElapsedThread.setPrintInfo(true);
-                    scanner.nextLine();
-                    timeElapsedThread.setPrintInfo(false);
-                }
-                case 0 -> {
-                    timeElapsedThread.stopThread();
-                    System.out.println("Bye!");
-                    quitSelected = true;
-                }
-                default -> {
-                    System.out.println("Incorrect Option!");
-                    scanner.nextLine();
-                }
-            }
-        }
+        TrafficLightApplication trafficLightApplication = new TrafficLightApplication(scanner, numberOfRoads, interval);
+        trafficLightApplication.navigateMenu();
     }
 
     /**
@@ -95,6 +47,80 @@ public class Main {
         }
         return input;
     }
+}
+
+/**
+ * Handles everything related to the Traffic Light application.
+ */
+class TrafficLightApplication {
+    private final Scanner scanner;
+    private final int numberOfRoads, interval;
+    private final TimeElapsed timeElapsedThread;
+
+    private final CircularArrayDeque roadsQueue;
+
+
+    public TrafficLightApplication(Scanner scanner, int numberOfRoads, int interval) {
+        this.scanner = scanner;
+        this.numberOfRoads = numberOfRoads;
+        this.interval = interval;
+        this.roadsQueue = new CircularArrayDeque(numberOfRoads);
+        timeElapsedThread = new TimeElapsed(numberOfRoads, interval);
+        timeElapsedThread.setName("QueueThread");
+        timeElapsedThread.start();
+    }
+
+    /**
+     * Navigates the menu and performs actions based on that.
+     */
+    public void navigateMenu() {
+        boolean quitSelected = false;
+        while (!quitSelected) {
+            printMenu();
+
+            int input = -1;
+            try {
+                input = Integer.parseInt(scanner.nextLine());
+            } catch (NumberFormatException ignored) {
+            }
+            switch (input) {
+                case 1 -> {
+                    System.out.println("Input road name:");
+                    String roadName = scanner.nextLine();
+                    if (roadsQueue.enqueue(roadName)) {
+                        System.out.println(roadName + " Added!");
+                    } else {
+                        System.out.println("Queue is full!");
+                    }
+                    scanner.nextLine();
+                }
+                case 2 -> {
+                    String removedRoad = roadsQueue.dequeue();
+                    if (removedRoad == null) {
+                        System.out.println("Queue is empty!");
+                    } else {
+                        System.out.println(removedRoad + " deleted!");
+                    }
+                    scanner.nextLine();
+                }
+                case 3 -> {
+                    timeElapsedThread.setRoadsQueue(roadsQueue);
+                    timeElapsedThread.setPrintInfo(true);
+                    scanner.nextLine();
+                    timeElapsedThread.setPrintInfo(false);
+                }
+                case 0 -> {
+                    timeElapsedThread.stopThread();
+                    System.out.println("Bye!");
+                    quitSelected = true;
+                }
+                default -> {
+                    System.out.println("Incorrect Option!");
+                    scanner.nextLine();
+                }
+            }
+        }
+    }
 
     /**
      * Prints the menu.
@@ -102,47 +128,95 @@ public class Main {
     private static void printMenu() {
         System.out.println("""
                 Menu:
-                1. Add
-                2. Delete
-                3. System
+                1. Add road
+                2. Delete road
+                3. Open system
                 0. Quit""");
     }
 }
 
 /**
- * Counts the seconds elapsed since program start. Has a boolean printMenu that can be set to true to print
+ * Implements {@link ArrayDeque} to create a fixed size circular queue.
+ * Doesn't allow to add any elements if the queue is full.
+ */
+class CircularArrayDeque {
+    private final Queue<String> queue;
+    private final int capacity;
+
+    public CircularArrayDeque(int capacity) {
+        this.capacity = capacity;
+        this.queue = new ArrayDeque<>(capacity);
+    }
+
+    /**
+     *
+     * @param data String data to be added
+     * @return true if added successfully, false if the queue is full
+     */
+    public boolean enqueue(String data) {
+        if (queue.size() >= capacity) {
+            return false;
+        } else {
+            queue.offer(data);
+            return true;
+        }
+    }
+
+    /**
+     * Remove and return the front element
+     */
+    public String dequeue() {
+        return queue.poll();
+    }
+
+    public void display() {
+        for (String data : queue) {
+            System.out.println(data);
+        }
+    }
+}
+
+/**
+ * Counts the seconds elapsed since program start.
+ * Has {@link #printInfo} that can be set to true to print time elapsed, number of roads, interval and the actual roads.
+ * Need to set the {@link  CircularArrayDeque} for them to be printed via the {@link #setRoadsQueue(CircularArrayDeque)}
  */
 class TimeElapsed extends Thread {
     private volatile boolean running = true;
     private boolean printInfo = false;
-    private int numberOfRoads, interval;
+    private final int numberOfRoads, interval;
+    private CircularArrayDeque roadsQueue;
 
     public void setPrintInfo(boolean printInfo) {
         this.printInfo = printInfo;
     }
 
-    public void setNumberOfRoads(int numberOfRoads) {
-        this.numberOfRoads = numberOfRoads;
+    public void setRoadsQueue(CircularArrayDeque roadsQueue) {
+        this.roadsQueue = roadsQueue;
     }
 
-    public void setInterval(int interval) {
+    public TimeElapsed(int numberOfRoads, int interval) {
+        this.numberOfRoads = numberOfRoads;
         this.interval = interval;
     }
 
     @Override
     public void run() {
-        long startTime = System.nanoTime(); // Capture the exact start time
-
+        long startTime = System.currentTimeMillis();
         while (running) {
-            long elapsedTime = (System.nanoTime() - startTime) / 1_000_000_000; // Convert nanoseconds to seconds
-            int secondsElapsed = (int) elapsedTime;
+            long secondsElapsed = (System.currentTimeMillis() - startTime) / 1000;
+
             if (printInfo) {
                 System.out.printf("""
                         ! %ds. have passed since system startup !
                         ! Number of roads: %d !
                         ! Interval: %d !
-                        ! Press "Enter" to open menu !
+                        
                         """, secondsElapsed, numberOfRoads, interval);
+                roadsQueue.display();
+                System.out.println("""
+                        
+                        ! Press "Enter" to open menu !""");
             }
             try {
                 TimeUnit.MILLISECONDS.sleep(1000);
