@@ -10,10 +10,30 @@ Completed Stage 5/6
 Traffic Light Simulator with Java - https://hyperskill.org/projects/288/stages/1500/implement
 Part of Hyperskill's Java Backend Developer (Spring Boot) course.
  */
+
+enum Color {
+    ANSI_RED("\u001B[31m"),
+    ANSI_GREEN("\u001B[32m"),
+    ANSI_YELLOW("\u001B[33m"),
+    ANSI_RESET("\u001B[0m");
+
+    private final String code;
+
+    Color(String ansiCode) {
+        this.code = ansiCode;
+    }
+
+    @Override
+    public String toString() {
+        return code;
+    }
+}
+
 public class Main {
     private static final String WELCOME_TEXT = "Welcome to the traffic management system!";
 
     public static void main(String[] args) {
+        System.out.println(Color.ANSI_GREEN + "Hello World!" + Color.ANSI_RESET);
         Scanner scanner = new Scanner(System.in);
 
         System.out.println(WELCOME_TEXT);
@@ -66,6 +86,7 @@ class TrafficLightApplication {
         this.interval = interval;
         this.roadsQueue = new CircularArrayDeque(numberOfRoads);
         timeElapsedThread = new TimeElapsed(numberOfRoads, interval);
+        timeElapsedThread.setRoadsQueue(roadsQueue);
         timeElapsedThread.setName("QueueThread");
         timeElapsedThread.start();
     }
@@ -86,20 +107,21 @@ class TrafficLightApplication {
             switch (input) {
                 case 1 -> {
                     System.out.println("Input road name:");
-                    String roadName = scanner.nextLine();
-                    if (roadsQueue.enqueue(roadName)) {
-                        System.out.println(roadName + " Added!");
+                    Road road = new Road();
+                    road.setName(scanner.nextLine());
+                    if (roadsQueue.enqueue(road)) {
+                        System.out.println(road.getName() + " Added!");
                     } else {
                         System.out.println("Queue is full!");
                     }
                     scanner.nextLine();
                 }
                 case 2 -> {
-                    String removedRoad = roadsQueue.dequeue();
+                    Road removedRoad = roadsQueue.dequeue();
                     if (removedRoad == null) {
                         System.out.println("Queue is empty!");
                     } else {
-                        System.out.println(removedRoad + " deleted!");
+                        System.out.println(removedRoad.getName() + " deleted!");
                     }
                     scanner.nextLine();
                 }
@@ -135,12 +157,44 @@ class TrafficLightApplication {
     }
 }
 
+class Road {
+    private boolean isOpen;
+    private String name;
+
+    public Road(String name) {
+        this.name = name;
+    }
+
+    public Road() {
+    }
+
+    public boolean isOpen() {
+        return isOpen;
+    }
+
+    public void setOpen(boolean open) {
+        isOpen = open;
+    }
+
+    public void switchStatus() {
+        isOpen = !isOpen;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
 /**
  * Implements {@link ArrayDeque} to create a fixed size circular queue.
  * Doesn't allow to add any elements if the queue is full.
  */
 class CircularArrayDeque {
-    private final Queue<String> queue;
+    private final Queue<Road> queue;
     private final int capacity;
 
     public CircularArrayDeque(int capacity) {
@@ -149,11 +203,10 @@ class CircularArrayDeque {
     }
 
     /**
-     *
      * @param data String data to be added
      * @return true if added successfully, false if the queue is full
      */
-    public boolean enqueue(String data) {
+    public boolean enqueue(Road data) {
         if (queue.size() >= capacity) {
             return false;
         } else {
@@ -165,14 +218,22 @@ class CircularArrayDeque {
     /**
      * Remove and return the front element
      */
-    public String dequeue() {
+    public Road dequeue() {
         return queue.poll();
     }
 
     public void display() {
-        for (String data : queue) {
-            System.out.println(data);
+        for (Road data : queue) {
+            System.out.println(data.getName());
         }
+    }
+
+    public Road element() {
+        return queue.element();
+    }
+
+    public Road peek() {
+        return queue.peek();
     }
 }
 
@@ -203,9 +264,15 @@ class TimeElapsed extends Thread {
     @Override
     public void run() {
         long startTime = System.currentTimeMillis();
+        long timer = System.currentTimeMillis();
         while (running) {
             long secondsElapsed = (System.currentTimeMillis() - startTime) / 1000;
 
+            if (secondsElapsed % interval == 0 && roadsQueue.peek() != null) {
+                roadsQueue.element().switchStatus();
+                timer = (System.currentTimeMillis() / 1000) + interval;
+            }
+            long secondsLeft = timer - System.currentTimeMillis() / 1000;
             if (printInfo) {
                 System.out.printf("""
                         ! %ds. have passed since system startup !
@@ -213,7 +280,12 @@ class TimeElapsed extends Thread {
                         ! Interval: %d !
                         
                         """, secondsElapsed, numberOfRoads, interval);
-                roadsQueue.display();
+                if (roadsQueue.element().isOpen()) {
+                    System.out.println(Color.ANSI_GREEN + roadsQueue.element().getName() + " will be open for " + secondsLeft + "s." + Color.ANSI_RESET);
+                } else {
+                    System.out.println(Color.ANSI_RED + roadsQueue.element().getName() + " will be closed for " + "s." + Color.ANSI_RESET);
+                }
+
                 System.out.println("""
                         
                         ! Press "Enter" to open menu !""");

@@ -2,13 +2,13 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/TrafficLight.iml" filepath="$PROJECT_DIR$/.idea/modules/TrafficLight.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Traffic Light Simulator with Java/task/TrafficLight.Traffic_Light_Simulator_with_Java-task.iml" filepath="$PROJECT_DIR$/.idea/modules/Traffic Light Simulator with Java/task/TrafficLight.Traffic_Light_Simulator_with_Java-task.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Traffic Light Simulator with Java/task/TrafficLight.Traffic_Light_Simulator_with_Java-task.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Traffic Light Simulator with Java/task/TrafficLight.Traffic_Light_Simulator_with_Java-task.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Traffic Light Simulator with Java/task/TrafficLight.Traffic_Light_Simulator_with_Java-task.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Traffic Light Simulator with Java/task/TrafficLight.Traffic_Light_Simulator_with_Java-task.test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/util/TrafficLight.util.iml" filepath="$PROJECT_DIR$/.idea/modules/util/TrafficLight.util.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/util/TrafficLight.util.main.iml" filepath="$PROJECT_DIR$/.idea/modules/util/TrafficLight.util.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/util/TrafficLight.util.test.iml" filepath="$PROJECT_DIR$/.idea/modules/util/TrafficLight.util.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Hyperskill-TrafficLightSimulator.iml" filepath="$PROJECT_DIR$/.idea/modules/Hyperskill-TrafficLightSimulator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Traffic Light Simulator with Java/task/Hyperskill-TrafficLightSimulator.Traffic_Light_Simulator_with_Java-task.iml" filepath="$PROJECT_DIR$/.idea/modules/Traffic Light Simulator with Java/task/Hyperskill-TrafficLightSimulator.Traffic_Light_Simulator_with_Java-task.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Traffic Light Simulator with Java/task/Hyperskill-TrafficLightSimulator.Traffic_Light_Simulator_with_Java-task.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Traffic Light Simulator with Java/task/Hyperskill-TrafficLightSimulator.Traffic_Light_Simulator_with_Java-task.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Traffic Light Simulator with Java/task/Hyperskill-TrafficLightSimulator.Traffic_Light_Simulator_with_Java-task.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Traffic Light Simulator with Java/task/Hyperskill-TrafficLightSimulator.Traffic_Light_Simulator_with_Java-task.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/util/Hyperskill-TrafficLightSimulator.util.iml" filepath="$PROJECT_DIR$/.idea/modules/util/Hyperskill-TrafficLightSimulator.util.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/util/Hyperskill-TrafficLightSimulator.util.main.iml" filepath="$PROJECT_DIR$/.idea/modules/util/Hyperskill-TrafficLightSimulator.util.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/util/Hyperskill-TrafficLightSimulator.util.test.iml" filepath="$PROJECT_DIR$/.idea/modules/util/Hyperskill-TrafficLightSimulator.util.test.iml" />
     </modules>
   </component>
 </project>
