@@ -1,7 +1,5 @@
 package traffic;
 
-import java.util.ArrayDeque;
-import java.util.Queue;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
@@ -12,10 +10,7 @@ Part of Hyperskill's Java Backend Developer (Spring Boot) course.
  */
 
 enum Color {
-    ANSI_RED("\u001B[31m"),
-    ANSI_GREEN("\u001B[32m"),
-    ANSI_YELLOW("\u001B[33m"),
-    ANSI_RESET("\u001B[0m");
+    ANSI_RED("\u001B[31m"), ANSI_GREEN("\u001B[32m"), ANSI_YELLOW("\u001B[33m"), ANSI_RESET("\u001B[0m");
 
     private final String code;
 
@@ -33,7 +28,6 @@ public class Main {
     private static final String WELCOME_TEXT = "Welcome to the traffic management system!";
 
     public static void main(String[] args) {
-        System.out.println(Color.ANSI_GREEN + "Hello World!" + Color.ANSI_RESET);
         Scanner scanner = new Scanner(System.in);
 
         System.out.println(WELCOME_TEXT);
@@ -77,14 +71,14 @@ class TrafficLightApplication {
     private final int numberOfRoads, interval;
     private final TimeElapsed timeElapsedThread;
 
-    private final CircularArrayDeque roadsQueue;
+    private final CircularArrayQ roadsQueue;
 
 
     public TrafficLightApplication(Scanner scanner, int numberOfRoads, int interval) {
         this.scanner = scanner;
         this.numberOfRoads = numberOfRoads;
         this.interval = interval;
-        this.roadsQueue = new CircularArrayDeque(numberOfRoads);
+        this.roadsQueue = new CircularArrayQ(numberOfRoads);
         timeElapsedThread = new TimeElapsed(numberOfRoads, interval);
         timeElapsedThread.setRoadsQueue(roadsQueue);
         timeElapsedThread.setName("QueueThread");
@@ -190,69 +184,92 @@ class Road {
 }
 
 /**
- * Implements {@link ArrayDeque} to create a fixed size circular queue.
- * Doesn't allow to add any elements if the queue is full.
+ * Circular queue implemented with array
  */
-class CircularArrayDeque {
-    private final Queue<Road> queue;
-    private final int capacity;
+class CircularArrayQ {
+    private Road[] queue;
+    private int front, rear, size, capacity;
 
-    public CircularArrayDeque(int capacity) {
+    public CircularArrayQ(int capacity) {
         this.capacity = capacity;
-        this.queue = new ArrayDeque<>(capacity);
+        this.queue = new Road[capacity];
+        front = rear = -1;
+        size = 0;
     }
 
-    /**
-     * @param data String data to be added
-     * @return true if added successfully, false if the queue is full
-     */
+    public boolean isEmpty() {
+        return size == 0;
+    }
+
+    public boolean isFull() {
+        return size == capacity;
+    }
+
+    // add an element and move the rear to its new position, if full, return false
     public boolean enqueue(Road data) {
-        if (queue.size() >= capacity) {
+        if (isFull()) {
             return false;
+        } else if (isEmpty()) {
+            front = rear = 0;
         } else {
-            queue.offer(data);
-            return true;
+            rear = (rear + 1) % capacity;
         }
+
+        queue[rear] = data;
+        size = Math.min(size + 1, capacity);
+        return true;
     }
 
-    /**
-     * Remove and return the front element
-     */
+    // remove the oldest added element(the front) and move the front position to the next one
     public Road dequeue() {
-        return queue.poll();
-    }
-
-    public void display() {
-        for (Road data : queue) {
-            System.out.println(data.getName());
+        if (isEmpty()) {
+            return null;
         }
-    }
 
-    public Road element() {
-        return queue.element();
+        Road data = queue[front];
+        queue[front] = null;
+        if (front == rear) { //only one element present
+            front = rear = -1;
+        } else {
+            front = (front + 1) % capacity;
+        }
+        size--;
+        return data;
     }
 
     public Road peek() {
-        return queue.peek();
+        if (isEmpty()) {
+            return null;
+        }
+        return queue[front];
+    }
+
+    // iterate over the array in the correct queue order and display values
+    public void display() {
+        int i = front;
+        for (int count = 0; count < size; count++) {
+            System.out.println(queue[i].getName());
+            i = (i + 1) % capacity; // move to the next index in the correct order
+        }
     }
 }
 
 /**
  * Counts the seconds elapsed since program start.
  * Has {@link #printInfo} that can be set to true to print time elapsed, number of roads, interval and the actual roads.
- * Need to set the {@link  CircularArrayDeque} for them to be printed via the {@link #setRoadsQueue(CircularArrayDeque)}
+ * Need to set the {@link  CircularArrayQ} for them to be printed via the {@link #setRoadsQueue(CircularArrayQ)}
  */
 class TimeElapsed extends Thread {
     private volatile boolean running = true;
     private boolean printInfo = false;
     private final int numberOfRoads, interval;
-    private CircularArrayDeque roadsQueue;
+    private CircularArrayQ roadsQueue;
 
     public void setPrintInfo(boolean printInfo) {
         this.printInfo = printInfo;
     }
 
-    public void setRoadsQueue(CircularArrayDeque roadsQueue) {
+    public void setRoadsQueue(CircularArrayQ roadsQueue) {
         this.roadsQueue = roadsQueue;
     }
 
@@ -269,7 +286,7 @@ class TimeElapsed extends Thread {
             long secondsElapsed = (System.currentTimeMillis() - startTime) / 1000;
 
             if (secondsElapsed % interval == 0 && roadsQueue.peek() != null) {
-                roadsQueue.element().switchStatus();
+                roadsQueue.peek().switchStatus();
                 timer = (System.currentTimeMillis() / 1000) + interval;
             }
             long secondsLeft = timer - System.currentTimeMillis() / 1000;
@@ -280,12 +297,12 @@ class TimeElapsed extends Thread {
                         ! Interval: %d !
                         
                         """, secondsElapsed, numberOfRoads, interval);
-                if (roadsQueue.element().isOpen()) {
-                    System.out.println(Color.ANSI_GREEN + roadsQueue.element().getName() + " will be open for " + secondsLeft + "s." + Color.ANSI_RESET);
+                if (roadsQueue.peek().isOpen()) {
+                    System.out.println(Color.ANSI_GREEN + roadsQueue.peek().getName() + " will be open for " + secondsLeft + "s." + Color.ANSI_RESET);
                 } else {
-                    System.out.println(Color.ANSI_RED + roadsQueue.element().getName() + " will be closed for " + "s." + Color.ANSI_RESET);
+                    System.out.println(Color.ANSI_RED + roadsQueue.peek().getName() + " will be closed for " + "s." + Color.ANSI_RESET);
                 }
-
+                roadsQueue.display();
                 System.out.println("""
                         
                         ! Press "Enter" to open menu !""");
