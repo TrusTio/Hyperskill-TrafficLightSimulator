@@ -237,6 +237,7 @@ class CircularArrayQ {
         } else {
             rear = (rear + 1) % capacity;
             queue[rear] = data;
+            //TODO: Adjust the time till next switch when more than 2 roads are added.
             queue[rear].setTimeTillNextSwitch(queue[rear - 1].getTimeTillNextSwitch());
         }
 
@@ -285,7 +286,7 @@ class CircularArrayQ {
         }
     }
 
-    //TODO: when you add a new road, the closed timestamp is incorrect.
+    //TODO: with 2+ roads, the timing of the 3rd one is always incorrect.
     public void updateRoadStatuses(int interval, long secondsElapsed) {
         if (firstRoadAdded) {
             queue[front].switchStatus((systemStartTime / 1000) + interval);
