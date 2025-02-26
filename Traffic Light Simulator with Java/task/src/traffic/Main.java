@@ -70,7 +70,6 @@ class TrafficLightApplication {
     private final Scanner scanner;
     private final int numberOfRoads, interval;
     private final TimeElapsed timeElapsedThread;
-
     private final CircularArrayQ roadsQueue;
 
 
@@ -154,6 +153,7 @@ class TrafficLightApplication {
 class Road {
     private boolean isOpen;
     private String name;
+    private long timeTillNextSwitch;
 
     public Road(String name) {
         this.name = name;
@@ -166,14 +166,6 @@ class Road {
         return isOpen;
     }
 
-    public void setOpen(boolean open) {
-        isOpen = open;
-    }
-
-    public void switchStatus() {
-        isOpen = !isOpen;
-    }
-
     public String getName() {
         return name;
     }
@@ -181,6 +173,30 @@ class Road {
     public void setName(String name) {
         this.name = name;
     }
+
+    public void setTimeTillNextSwitch(long timeTillNextSwitch) {
+        this.timeTillNextSwitch = timeTillNextSwitch;
+    }
+
+    public long getTimeTillNextSwitch() {
+        return timeTillNextSwitch;
+    }
+
+    public void setOpen(boolean open) {
+        isOpen = open;
+    }
+
+    public void switchStatus(long timeTillNextSwitch) {
+        if (isOpen) {
+            this.timeTillNextSwitch = timeTillNextSwitch;
+            isOpen = false;
+        } else {
+            this.timeTillNextSwitch = timeTillNextSwitch;
+            isOpen = true;
+        }
+
+    }
+
 }
 
 /**
@@ -189,6 +205,9 @@ class Road {
 class CircularArrayQ {
     private Road[] queue;
     private int front, rear, size, capacity;
+    private int currentOpenIndex = -1;
+    boolean firstRoadAdded = false;
+    private long systemStartTime = -1;
 
     public CircularArrayQ(int capacity) {
         this.capacity = capacity;
@@ -211,11 +230,16 @@ class CircularArrayQ {
             return false;
         } else if (isEmpty()) {
             front = rear = 0;
+            systemStartTime = System.currentTimeMillis();
+            currentOpenIndex = front; // set to open if first element
+            firstRoadAdded = true;
+            queue[rear] = data;
         } else {
             rear = (rear + 1) % capacity;
+            queue[rear] = data;
+            queue[rear].setTimeTillNextSwitch(queue[rear - 1].getTimeTillNextSwitch());
         }
 
-        queue[rear] = data;
         size = Math.min(size + 1, capacity);
         return true;
     }
@@ -234,7 +258,10 @@ class CircularArrayQ {
             front = (front + 1) % capacity;
         }
         size--;
+        if (isEmpty()) currentOpenIndex = -1; // no roads = no open index
         return data;
+
+
     }
 
     public Road peek() {
@@ -248,8 +275,46 @@ class CircularArrayQ {
     public void display() {
         int i = front;
         for (int count = 0; count < size; count++) {
-            System.out.println(queue[i].getName());
+            long secondsLeft = queue[i].getTimeTillNextSwitch() - System.currentTimeMillis() / 1000;
+            if (queue[i].isOpen()) {
+                System.out.println(Color.ANSI_GREEN + queue[i].getName() + " will be open for " + secondsLeft + "s." + Color.ANSI_RESET);
+            } else {
+                System.out.println(Color.ANSI_RED + queue[i].getName() + " will be closed for " + secondsLeft + "s." + Color.ANSI_RESET);
+            }
             i = (i + 1) % capacity; // move to the next index in the correct order
+        }
+    }
+
+    //TODO: when you add a new road, the closed timestamp is incorrect.
+    public void updateRoadStatuses(int interval, long secondsElapsed) {
+        if (firstRoadAdded) {
+            queue[front].switchStatus((systemStartTime / 1000) + interval);
+            queue[front].setOpen(true);
+            firstRoadAdded = false;
+        }
+
+        long elapsedSinceStart = System.currentTimeMillis() - systemStartTime;
+        if ((elapsedSinceStart / 1000) % interval == 0 && peek() != null) {
+            if (size == 1) { // if the queue has only a single road, keep it open at all times.
+                long timeTillNextSwitch = (System.currentTimeMillis() / 1000) + interval;
+                queue[front].switchStatus(timeTillNextSwitch);
+                queue[front].setOpen(true);
+            } else {
+                int i = front;
+                long timeTillNextSwitch = (System.currentTimeMillis() / 1000) + interval;
+                System.out.println("CURRENT OPEN INDEX: " + currentOpenIndex);
+                System.out.println(queue[currentOpenIndex].getName() + " Status switched1.");
+                queue[currentOpenIndex].switchStatus(timeTillNextSwitch);
+                currentOpenIndex = (currentOpenIndex + 1) % size;
+
+                System.out.println("Updating current open index to the next one " + currentOpenIndex);
+                System.out.println(queue[currentOpenIndex].getName() + " Status switched2.");
+                queue[currentOpenIndex].switchStatus(timeTillNextSwitch);
+                for (int count = 0; count < size; count++) {
+                    i = (i + 1) % capacity; // move to the next index in the correct order
+                }
+
+            }
         }
     }
 }
@@ -281,15 +346,10 @@ class TimeElapsed extends Thread {
     @Override
     public void run() {
         long startTime = System.currentTimeMillis();
-        long timer = System.currentTimeMillis();
         while (running) {
             long secondsElapsed = (System.currentTimeMillis() - startTime) / 1000;
+            roadsQueue.updateRoadStatuses(interval, (System.currentTimeMillis() - startTime));
 
-            if (secondsElapsed % interval == 0 && roadsQueue.peek() != null) {
-                roadsQueue.peek().switchStatus();
-                timer = (System.currentTimeMillis() / 1000) + interval;
-            }
-            long secondsLeft = timer - System.currentTimeMillis() / 1000;
             if (printInfo) {
                 System.out.printf("""
                         ! %ds. have passed since system startup !
@@ -297,11 +357,6 @@ class TimeElapsed extends Thread {
                         ! Interval: %d !
                         
                         """, secondsElapsed, numberOfRoads, interval);
-                if (roadsQueue.peek().isOpen()) {
-                    System.out.println(Color.ANSI_GREEN + roadsQueue.peek().getName() + " will be open for " + secondsLeft + "s." + Color.ANSI_RESET);
-                } else {
-                    System.out.println(Color.ANSI_RED + roadsQueue.peek().getName() + " will be closed for " + "s." + Color.ANSI_RESET);
-                }
                 roadsQueue.display();
                 System.out.println("""
                         
