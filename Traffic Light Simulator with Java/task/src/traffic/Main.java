@@ -10,7 +10,7 @@ Part of Hyperskill's Java Backend Developer (Spring Boot) course.
  */
 
 enum Color {
-    ANSI_RED("\u001B[31m"), ANSI_GREEN("\u001B[32m"), ANSI_YELLOW("\u001B[33m"), ANSI_RESET("\u001B[0m");
+    ANSI_RED("\u001B[31m"), ANSI_GREEN("\u001B[32m"), ANSI_RESET("\u001B[0m");
 
     private final String code;
 
@@ -68,16 +68,13 @@ public class Main {
  */
 class TrafficLightApplication {
     private final Scanner scanner;
-    private final int numberOfRoads, interval;
     private final TimeElapsed timeElapsedThread;
     private final CircularArrayQ roadsQueue;
 
 
     public TrafficLightApplication(Scanner scanner, int numberOfRoads, int interval) {
         this.scanner = scanner;
-        this.numberOfRoads = numberOfRoads;
-        this.interval = interval;
-        this.roadsQueue = new CircularArrayQ(numberOfRoads);
+        this.roadsQueue = new CircularArrayQ(numberOfRoads, interval);
         timeElapsedThread = new TimeElapsed(numberOfRoads, interval);
         timeElapsedThread.setRoadsQueue(roadsQueue);
         timeElapsedThread.setName("QueueThread");
@@ -155,10 +152,6 @@ class Road {
     private String name;
     private long timeTillNextSwitch;
 
-    public Road(String name) {
-        this.name = name;
-    }
-
     public Road() {
     }
 
@@ -208,9 +201,11 @@ class CircularArrayQ {
     private int currentOpenIndex = -1;
     boolean firstRoadAdded = false;
     private long systemStartTime = -1;
+    private int interval;
 
-    public CircularArrayQ(int capacity) {
+    public CircularArrayQ(int capacity, int interval) {
         this.capacity = capacity;
+        this.interval = interval;
         this.queue = new Road[capacity];
         front = rear = -1;
         size = 0;
@@ -223,6 +218,7 @@ class CircularArrayQ {
     public boolean isFull() {
         return size == capacity;
     }
+
 
     // add an element and move the rear to its new position, if full, return false
     public boolean enqueue(Road data) {
@@ -237,8 +233,13 @@ class CircularArrayQ {
         } else {
             rear = (rear + 1) % capacity;
             queue[rear] = data;
-            //TODO: Adjust the time till next switch when more than 2 roads are added.
-            queue[rear].setTimeTillNextSwitch(queue[rear - 1].getTimeTillNextSwitch());
+
+            // if previous road is open, time till next open is the same, otherwise previous + interval
+            if (queue[rear - 1].isOpen()) {
+                queue[rear].setTimeTillNextSwitch(queue[rear - 1].getTimeTillNextSwitch());
+            } else {
+                queue[rear].setTimeTillNextSwitch(queue[rear - 1].getTimeTillNextSwitch() + interval);
+            }
         }
 
         size = Math.min(size + 1, capacity);
@@ -261,8 +262,6 @@ class CircularArrayQ {
         size--;
         if (isEmpty()) currentOpenIndex = -1; // no roads = no open index
         return data;
-
-
     }
 
     public Road peek() {
@@ -286,8 +285,10 @@ class CircularArrayQ {
         }
     }
 
-    //TODO: with 2+ roads, the timing of the 3rd one is always incorrect.
-    public void updateRoadStatuses(int interval, long secondsElapsed) {
+    /**
+     * Updates the status and the seconds till the next switch of the roads in the Q accordingly
+     */
+    public void updateRoadStatuses() {
         if (firstRoadAdded) {
             queue[front].switchStatus((systemStartTime / 1000) + interval);
             queue[front].setOpen(true);
@@ -296,25 +297,24 @@ class CircularArrayQ {
 
         long elapsedSinceStart = System.currentTimeMillis() - systemStartTime;
         if ((elapsedSinceStart / 1000) % interval == 0 && peek() != null) {
+            long timeTillNextSwitch = (System.currentTimeMillis() / 1000) + interval;
             if (size == 1) { // if the queue has only a single road, keep it open at all times.
-                long timeTillNextSwitch = (System.currentTimeMillis() / 1000) + interval;
                 queue[front].switchStatus(timeTillNextSwitch);
                 queue[front].setOpen(true);
             } else {
-                int i = front;
-                long timeTillNextSwitch = (System.currentTimeMillis() / 1000) + interval;
-                System.out.println("CURRENT OPEN INDEX: " + currentOpenIndex);
-                System.out.println(queue[currentOpenIndex].getName() + " Status switched1.");
+                // switch status of current road to off and move to the next road in Q
                 queue[currentOpenIndex].switchStatus(timeTillNextSwitch);
                 currentOpenIndex = (currentOpenIndex + 1) % size;
 
-                System.out.println("Updating current open index to the next one " + currentOpenIndex);
-                System.out.println(queue[currentOpenIndex].getName() + " Status switched2.");
-                queue[currentOpenIndex].switchStatus(timeTillNextSwitch);
+                int i = currentOpenIndex;
                 for (int count = 0; count < size; count++) {
-                    i = (i + 1) % capacity; // move to the next index in the correct order
+                    if (count == 0) {
+                        queue[i].switchStatus(timeTillNextSwitch); //switch the status and set the time for the newly opened road
+                    } else { // handle the rest of the roads
+                        queue[i].setTimeTillNextSwitch(timeTillNextSwitch + (interval * (count - 1)));
+                    }
+                    i = (i + 1) % size; // Move to the next index in the correct order
                 }
-
             }
         }
     }
@@ -349,7 +349,7 @@ class TimeElapsed extends Thread {
         long startTime = System.currentTimeMillis();
         while (running) {
             long secondsElapsed = (System.currentTimeMillis() - startTime) / 1000;
-            roadsQueue.updateRoadStatuses(interval, (System.currentTimeMillis() - startTime));
+            roadsQueue.updateRoadStatuses();
 
             if (printInfo) {
                 System.out.printf("""
