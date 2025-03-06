@@ -12,36 +12,34 @@ files:
 feedback_link: https://hyperskill.org/learn/step/22727#comment
 status: Failed
 feedback:
-  message: "Wrong answer in test #13\n\nSome roads&#39; time to close/open is incorrect.\
-    \ Formal snippet of expected/got output:\n---Interval: 2---\n---Performed action:\
-    \ Started. Added 2 roads.---\n---Expected:---\nRoad0, open, 2s.\nRoad1, closed,\
-    \ 2s.\n---Got:---\nRoad0, open, 1s.\nRoad1, closed, 1740656914s.\n\nPlease find\
-    \ below the output of your program during this failed test.\nNote that the &#39;&gt;&#39;\
-    \ character indicates the beginning of the input line.\n\n---\n\nWelcome to the\
-    \ traffic management system!\nInput the number of roads:&gt; 2\nInput the interval:&gt;\
-    \ 2\nMenu:\n1. Add road\n2. Delete road\n3. Open system\n0. Quit\n&gt; 1\nInput\
-    \ road name:\n&gt; n3w_v3ry_unu5u4l_r04d_n4m3_0\nn3w_v3ry_unu5u4l_r04d_n4m3_0\
-    \ Added!\n&gt; \nMenu:\n1. Add road\n2. Delete road\n3. Open system\n0. Quit\n\
-    &gt; 1\nInput road name:\n&gt; n3w_v3ry_unu5u4l_r04d_n4m3_1\nn3w_v3ry_unu5u4l_r04d_n4m3_1\
-    \ Added!\n&gt; \nMenu:\n1. Add road\n2. Delete road\n3. Open system\n0. Quit\n\
-    &gt; 3\n! 1s. have passed since system startup !\n! Number of roads: 2 !\n! Interval:\
-    \ 2 !\n\nn3w_v3ry_unu5u4l_r04d_n4m3_0 will be open for 1s.\nn3w_v3ry_unu5u4l_r04d_n4m3_1\
-    \ will be closed for -1740656914s.\n\n! Press &quot;Enter&quot; to open menu !\n\
-    ! 2s. have passed since system startup !\n! Number of roads: 2 !\n! Interval:\
-    \ 2 !\n\nn3w_v3ry_unu5u4l_r04d_n4m3_0 will be closed for 2s.\nn3w_v3ry_unu5u4l_r04d_n4m3_1\
-    \ will be open for 2s.\n\n! Press &quot;Enter&quot; to open menu !\n! 3s. have\
-    \ passed since system startup !\n! Number of roads: 2 !\n! Interval: 2 !\n\nn3w_v3ry_unu5u4l_r04d_n4m3_0\
-    \ will be closed for 1s.\nn3w_v3ry_unu5u4l_r04d_n4m3_1 will be open for 1s.\n\n\
-    ! Press &quot;Enter&quot; to open menu !\n! 4s. have passed since system startup\
-    \ !\n! Number of roads: 2 !\n! Interval: 2 !\n\nn3w_v3ry_unu5u4l_r04d_n4m3_0 will\
-    \ be open for 2s.\nn3w_v3ry_unu5u4l_r04d_n4m3_1 will be closed for 2s.\n\n! Press\
-    \ &quot;Enter&quot; to open menu !\n! 5s. have passed since system startup !\n\
-    ! Number of roads: 2 !\n! Interval: 2 !\n\nn3w_v3ry_unu5u4l_r04d_n4m3_0 will be\
-    \ open for 1s.\nn3w_v3ry_unu5u4l_r04d_n4m3_1 will be closed for 1s.\n\n! Press\
-    \ &quot;Enter&quot; to open menu !\n! 6s. have passed since system startup !\n\
-    ! Number of roads: 2 !\n! Interval: 2 !\n\nn3w_v3ry_unu5u4l_r04d_n4m3_0 will be\
-    \ closed for 2s.\nn3w_v3ry_unu5u4l_r04d_n4m3_1 will be open for 2s.\n\n! Press\
-    \ &quot;Enter&quot; to open menu !\n&gt; \nMenu:\n1. Add road\n2. Delete road\n\
-    3. Open system\n0. Quit\n&gt; 0\nBye!"
-  time: "Thu, 27 Feb 2025 11:48:42 UTC"
+  message: "Wrong answer in test #17\n\nSome roads describe their state incorrectly.\
+    \ Road should be &quot;closed&quot;, but found &quot;open&quot; or vise versa.\
+    \ Formal snippet of expected/got output:\n---Interval: 2---\n...\nRoad0, open,\
+    \ 1s.\nRoad1, closed, 1s.\n---Performed action: Waited 1 second.---\n---Expected:---\n\
+    Road0, closed, 2s.\nRoad1, open, 2s.\n---Got:---\nRoad0, open, 0s.\nRoad1, closed,\
+    \ 0s.\n\nPlease find below the output of your program during this failed test.\n\
+    Note that the &#39;&gt;&#39; character indicates the beginning of the input line.\n\
+    \n---\n\nstdout:\nWelcome to the traffic management system!\nInput the number\
+    \ of roads:&gt; 2\nInput the interval:&gt; 2\nMenu:\n1. Add road\n2. Delete road\n\
+    3. Open system\n0. Quit\n&gt; 1\nInput road name:\n&gt; n3w_v3ry_unu5u4l_r04d_n4m3_0\n\
+    n3w_v3ry_unu5u4l_r04d_n4m3_0 Added!\n&gt; \nMenu:\n1. Add road\n2. Delete road\n\
+    3. Open system\n0. Quit\n&gt; 3\n! 1s. have passed since system startup !\n! Number\
+    \ of roads: 2 !\n! Interval: 2 !\n\nn3w_v3ry_unu5u4l_r04d_n4m3_0 will be open\
+    \ for 2s.\n\n! Press &quot;Enter&quot; to open menu !\n&gt; \nMenu:\n1. Add road\n\
+    2. Delete road\n3. Open system\n0. Quit\n&gt; 1\nInput road name:\n&gt; n3w_v3ry_unu5u4l_r04d_n4m3_1\n\
+    n3w_v3ry_unu5u4l_r04d_n4m3_1 Added!\n&gt; \nMenu:\n1. Add road\n2. Delete road\n\
+    3. Open system\n0. Quit\n&gt; 3\n! 2s. have passed since system startup !\n! Number\
+    \ of roads: 2 !\n! Interval: 2 !\n\nn3w_v3ry_unu5u4l_r04d_n4m3_0 will be open\
+    \ for 1s.\nn3w_v3ry_unu5u4l_r04d_n4m3_1 will be closed for 1s.\n\n! Press &quot;Enter&quot;\
+    \ to open menu !\n&gt; \nMenu:\n1. Add road\n2. Delete road\n3. Open system\n\
+    0. Quit\n&gt; 3\n! 3s. have passed since system startup !\n! Number of roads:\
+    \ 2 !\n! Interval: 2 !\n\nn3w_v3ry_unu5u4l_r04d_n4m3_0 will be open for 0s.\n\
+    n3w_v3ry_unu5u4l_r04d_n4m3_1 will be closed for 0s.\n\n! Press &quot;Enter&quot;\
+    \ to open menu !\n\nstderr:\nMar 06, 2025 12:39:07 PM traffic.CircularArrayQ updateRoadStatuses\n\
+    INFO: Performing first update \nMar 06, 2025 12:39:07 PM traffic.CircularArrayQ\
+    \ updateRoadStatuses\nINFO: Updating road statuses via loop for index 0\nMar 06,\
+    \ 2025 12:39:07 PM traffic.CircularArrayQ updateRoadStatuses\nINFO: count == 0,\
+    \ Skipping the first road, index 0 aka n3w_v3ry_unu5u4l_r04d_n4m3_0 with status\
+    \ true"
+  time: "Thu, 06 Mar 2025 10:39:10 UTC"
 record: 5
