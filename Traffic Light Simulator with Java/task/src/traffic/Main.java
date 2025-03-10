@@ -1,17 +1,17 @@
 package traffic;
 
 import java.util.Scanner;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /*
-Working on Stage 6/6
-Currently fails at test #17 and sometimes at test #15.
-Works fine during manual testing, but during the automated tests, sometimes the timing seems to be wrong..
+Stage 6/6 completed - passed all tests.
 Traffic Light Simulator with Java - https://hyperskill.org/projects/288/stages/1500/implement
 Part of Hyperskill's Java Backend Developer (Spring Boot) course.
  */
-
 enum Color {
     ANSI_RED("\u001B[31m"), ANSI_YELLOW("\u001B[33m"), ANSI_GREEN("\u001B[32m"), ANSI_RESET("\u001B[0m");
 
@@ -31,8 +31,7 @@ public class Main {
     private static final String WELCOME_TEXT = "Welcome to the traffic management system!";
 
     public static void main(String[] args) {
-        //Thread.currentThread().setPriority(Thread.NORM_PRIORITY - 4);
-        // System.out.println("Main priority" + Thread.currentThread().getPriority());
+
         Thread.currentThread().setName("Main");
         Scanner scanner = new Scanner(System.in);
 
@@ -74,18 +73,22 @@ public class Main {
  */
 class TrafficLightApplication {
     private final Scanner scanner;
-    private final TimeElapsed timeElapsedThread;
-    private final CircularArrayQ roadsQueue;
+    private final CircularRoadQueue roadsQueue;
+    private final ScheduledExecutorService scheduler;
+    private final RoadTrafficTimer roadTrafficTimer;
 
 
     public TrafficLightApplication(Scanner scanner, int numberOfRoads, int interval) {
         this.scanner = scanner;
-        this.roadsQueue = new CircularArrayQ(numberOfRoads, interval);
-        timeElapsedThread = new TimeElapsed(numberOfRoads, interval);
-        timeElapsedThread.setRoadsQueue(roadsQueue);
-        timeElapsedThread.setName("QueueThread");
-        timeElapsedThread.start();
-
+        this.roadsQueue = new CircularRoadQueue(numberOfRoads, interval);
+        this.roadTrafficTimer = new RoadTrafficTimer(numberOfRoads, interval, System.currentTimeMillis());
+        ThreadFactory namedThreadFactory = runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setName("QueueThread");
+            return thread;
+        };
+        scheduler = Executors.newSingleThreadScheduledExecutor(namedThreadFactory);
+        scheduler.scheduleAtFixedRate(roadTrafficTimer, 0, 1, TimeUnit.SECONDS);
     }
 
     /**
@@ -124,13 +127,14 @@ class TrafficLightApplication {
                 }
                 case 3 -> {
                     roadsQueue.setSystemStartTime(System.currentTimeMillis());
-                    timeElapsedThread.setRoadsQueue(roadsQueue);
-                    timeElapsedThread.setPrintInfo(true);
+                    roadTrafficTimer.setRoadsQueue(roadsQueue);
+                    roadTrafficTimer.setPrintInfo(true);
                     scanner.nextLine();
-                    timeElapsedThread.setPrintInfo(false);
+                    roadTrafficTimer.setPrintInfo(false);
                 }
                 case 0 -> {
-                    timeElapsedThread.stopThread();
+                    roadTrafficTimer.stopThread();
+                    scheduler.shutdown();
                     System.out.println("Bye!");
                     quitSelected = true;
                 }
@@ -155,6 +159,9 @@ class TrafficLightApplication {
     }
 }
 
+/**
+ * Road class to store details about the roads.
+ */
 class Road {
     private boolean isOpen;
     private String name;
@@ -204,19 +211,18 @@ class Road {
 /**
  * Circular queue implemented with array
  */
-class CircularArrayQ {
-    private static final Logger logger = Logger.getLogger(CircularArrayQ.class.getName());
-    //getLogger(LoggingFeature.DEFAULT_LOGGER_NAME).addHandler(new ConsoleHandler());
+class CircularRoadQueue {
+    private static final Logger logger = Logger.getLogger(CircularRoadQueue.class.getName());
 
-    private Road[] queue;
+    private final Road[] queue;
     private int front, rear, size, capacity;
     private int currentOpenIndex = -1;
     boolean firstUpdatePassed = false;
     private long systemStartTime = -1;
-    private long lastSwitchTime = -1;
+    private long lastRoadUpdateTime = -1;
     private int interval;
 
-    public CircularArrayQ(int capacity, int interval) {
+    public CircularRoadQueue(int capacity, int interval) {
         this.capacity = capacity;
         this.interval = interval;
         this.queue = new Road[capacity];
@@ -233,10 +239,13 @@ class CircularArrayQ {
     }
 
     public void setSystemStartTime(long systemStartTime) {
-        this.systemStartTime = systemStartTime;
+        if (this.systemStartTime < 0) { // set only if it hasn't been set before that
+            logger.info(Color.ANSI_YELLOW + "setSystemStartTime set");
+            this.systemStartTime = systemStartTime;
+        }
     }
 
-    // add an element and move the rear to its new position, if full, return false
+    // adds an element and move the rear to its new position, if full, return false
     public boolean enqueue(Road data) {
         if (isFull()) {
             return false;
@@ -251,7 +260,6 @@ class CircularArrayQ {
             queue[rear] = data;
             queue[rear].setOpen(false);
 
-
             // if previous road is open, time till next open is the same, otherwise previous + interval
             if (queue[rear - 1].isOpen()) {
                 queue[rear].setTimeTillNextSwitch(queue[rear - 1].getTimeTillNextSwitch());
@@ -259,15 +267,14 @@ class CircularArrayQ {
             } else {
                 queue[rear].setTimeTillNextSwitch(queue[rear - 1].getTimeTillNextSwitch() + interval);
             }
-
-
         }
 
         size = Math.min(size + 1, capacity);
         return true;
     }
 
-    // remove the oldest added element(the front) and move the front position to the next one
+    // removes the oldest added element(the front) and move the front position to the next one
+    // returns the removed element
     public Road dequeue() {
         if (isEmpty()) {
             return null;
@@ -281,7 +288,11 @@ class CircularArrayQ {
             front = (front + 1) % capacity;
         }
         size--;
-        if (isEmpty()) currentOpenIndex = -1; // no roads = no open index
+        if (isEmpty()) {
+            // no roads = no open index and system start time reset.
+            currentOpenIndex = -1;
+            systemStartTime = -1;
+        }
         return data;
     }
 
@@ -292,7 +303,7 @@ class CircularArrayQ {
         return queue[front];
     }
 
-    // iterate over the array in the correct queue order and display values
+    // iterates over the array in the correct queue order and display values
     public synchronized void display() {
         int i = front;
         for (int count = 0; count < size; count++) {
@@ -315,39 +326,45 @@ class CircularArrayQ {
         long elapsedSinceStart = System.currentTimeMillis() - systemStartTime;
         long timeTillNextSwitch = (System.currentTimeMillis() / 1000) + interval;
 
-        // first update that happens before the first interval, but also happens only once.
+        // first update that happens before the first interval, happens only once.
         if (!firstUpdatePassed && systemStartTime > 0 && !isEmpty()) {
-            logger.info(Color.ANSI_YELLOW + "Performing first update ");
-
-            // set the time of the first road
-            queue[currentOpenIndex].setTimeTillNextSwitch(timeTillNextSwitch);
-            // currentOpenIndex = (currentOpenIndex + 1) % size;
+            logger.info(Color.ANSI_YELLOW + "Performing first update " + elapsedSinceStart / 1000);
 
             int i = currentOpenIndex;
             for (int count = 0; count < size; count++) {
                 logger.info(Color.ANSI_YELLOW + "Updating road statuses via loop for index " + i);
-                if (count == 0) {
-                    logger.info(Color.ANSI_YELLOW + "count == 0, Skipping the first road, index " + i + " aka " + queue[i].getName() + " with status " + queue[i].isOpen());
+                if (count == 0) { // set the time of the first road
+                    queue[currentOpenIndex].setTimeTillNextSwitch(timeTillNextSwitch);
+                    logger.info(Color.ANSI_YELLOW + "Updated the currently open road" + i + " aka " + queue[i].getName() + " with status " + queue[i].isOpen());
                 } else { // handle the rest of the roads
-                    queue[i].setTimeTillNextSwitch(timeTillNextSwitch + (interval * (count - 1)));
+                    queue[i].setTimeTillNextSwitch(timeTillNextSwitch + interval * (count - 1));
                     logger.info(Color.ANSI_YELLOW + "Updated index " + i + " aka " + queue[i].getName() + " to status " + queue[i].isOpen());
                 }
                 i = (i + 1) % size; // Move to the next index in the correct order
             }
             firstUpdatePassed = true;
-            lastSwitchTime = System.currentTimeMillis();
+            lastRoadUpdateTime = System.currentTimeMillis();
         }
 
 
         // Do nothing until at least one interval has passed or system hasn't started
         if (elapsedSinceStart < interval * 1000 || systemStartTime < 0) {
+            logger.info(Color.ANSI_YELLOW + "First interval hasn't passed yet");
             return;
         }
 
-        if (lastSwitchTime < 0 || System.currentTimeMillis() - lastSwitchTime < interval * 1000) {
-            return; // Not enough time has passed
+        //Not enough time has passed for update
+        //dividing by 1000 before subtracting as otherwise small millisecond differences mess up the timing.
+        if (lastRoadUpdateTime < 0 || (System.currentTimeMillis() / 1000 - lastRoadUpdateTime / 1000) < interval) {
+            logger.info(Color.ANSI_YELLOW + "Not enough time has passed for update" +
+                        "\nLast road update time value: " + lastRoadUpdateTime +
+                        "\nCurrent time value: " + System.currentTimeMillis() +
+                        "\n current/1000 - last/1000: " + ((System.currentTimeMillis() / 1000) - (lastRoadUpdateTime / 1000)) +
+                        "\nInterval: " + interval);
+            return;
         }
 
+        // regular updates
         if (peek() != null) {
             logger.info(Color.ANSI_YELLOW + "Updating road statuses...");
 
@@ -355,87 +372,79 @@ class CircularArrayQ {
                 queue[front].switchStatus(timeTillNextSwitch);
                 queue[front].setOpen(true);
             } else {
-                // switch status of current road to off and move to the next road in Q
+                // switch status of CURRENTLY OPEN road to off and move to the next road in Q
                 queue[currentOpenIndex].switchStatus(timeTillNextSwitch);
                 currentOpenIndex = (currentOpenIndex + 1) % size;
 
+                // handle the rest of the roads
                 int i = currentOpenIndex;
                 for (int count = 0; count < size; count++) {
                     logger.info(Color.ANSI_YELLOW + "Updating road statuses via loop for index " + i);
                     if (count == 0) {
-                        queue[i].switchStatus(timeTillNextSwitch); //switch the status and set the time for the newly opened road
-                        logger.info(Color.ANSI_YELLOW + "count == 0, Updated index " + i + " aka " + queue[i].getName() + " to status " + queue[i].isOpen());
+                        queue[i].switchStatus(timeTillNextSwitch); //switch the status and set the time for the NEW/NEXT open road
                     } else { // handle the rest of the roads
-                        queue[i].setTimeTillNextSwitch(timeTillNextSwitch + (interval * (count - 1)));
-                        logger.info(Color.ANSI_YELLOW + "Updated index " + i + " aka " + queue[i].getName() + " to status " + queue[i].isOpen());
+                        queue[i].setTimeTillNextSwitch(timeTillNextSwitch + interval * (count - 1));
                     }
+                    logger.info(Color.ANSI_YELLOW + "Updated index " + i + " aka " + queue[i].getName() + " to status " + queue[i].isOpen());
                     i = (i + 1) % size; // Move to the next index in the correct order
                 }
             }
-            lastSwitchTime = System.currentTimeMillis();
-
-
+            lastRoadUpdateTime = System.currentTimeMillis();
+            logger.info("Updating lastSwitchTime: " + lastRoadUpdateTime);
         }
     }
 }
 
 /**
- * Counts the seconds elapsed since program start.
- * Has {@link #printInfo} that can be set to true to print time elapsed, number of roads, interval and the actual roads.
- * Need to set the {@link  CircularArrayQ} for them to be printed via the {@link #setRoadsQueue(CircularArrayQ)}
+ * Implements {@link Runnable} and is responsible to track time elapsed since it was started.
+ * It's also responsible to update the road statuses and print system/road information when {@link #printInfo} is set to true
  */
-class TimeElapsed extends Thread {
+class RoadTrafficTimer implements Runnable {
     private volatile boolean running = true;
     private boolean printInfo = false;
     private final int numberOfRoads, interval;
-    private CircularArrayQ roadsQueue;
+    private CircularRoadQueue roadsQueue;
+    private final long startTime;
 
     public void setPrintInfo(boolean printInfo) {
         this.printInfo = printInfo;
     }
 
-    public void setRoadsQueue(CircularArrayQ roadsQueue) {
+    public void setRoadsQueue(CircularRoadQueue roadsQueue) {
         this.roadsQueue = roadsQueue;
     }
 
-    public TimeElapsed(int numberOfRoads, int interval) {
+    public RoadTrafficTimer(int numberOfRoads, int interval, long startTime) {
         this.numberOfRoads = numberOfRoads;
         this.interval = interval;
+        this.startTime = startTime;
     }
 
     @Override
     public void run() {
-        long startTime = System.currentTimeMillis();
-        while (running) {
-            long secondsElapsed = (System.currentTimeMillis() - startTime) / 1000;
+        if (!running) return; // Stop execution if the thread is stopped
+
+        long secondsElapsed = (System.currentTimeMillis() - startTime) / 1000;
+
+
+        if (printInfo) {
+            System.out.printf("""
+                    ! %ds. have passed since system startup !
+                    ! Number of roads: %d !
+                    ! Interval: %d !
+                    
+                    """, secondsElapsed, numberOfRoads, interval);
             synchronized (this) {
                 roadsQueue.updateRoadStatuses();
+                roadsQueue.display();
             }
-
-            if (printInfo) {
-                System.out.printf("""
-                        ! %ds. have passed since system startup !
-                        ! Number of roads: %d !
-                        ! Interval: %d !
-                        
-                        """, secondsElapsed, numberOfRoads, interval);
-                synchronized (this) {
-                    roadsQueue.display();
-                }
-                System.out.println("""
-                        
-                        ! Press "Enter" to open menu !""");
-            }
-            try {
-                TimeUnit.MILLISECONDS.sleep(1000);
-            } catch (InterruptedException e) {
-                break;
-            }
+            System.out.println("""
+                    
+                    ! Press "Enter" to open menu !""");
         }
     }
 
     public void stopThread() {
         running = false;
-        this.interrupt(); // interrupt if sleeping
     }
 }
